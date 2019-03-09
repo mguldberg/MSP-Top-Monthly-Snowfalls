@@ -24,42 +24,34 @@ connection.query(queryStringCountSql, (err, result) => {
     console.log('queryStringCountResult', queryStringCountResult);
     // queryStringCountResult = 5;
 
-    calcLoop(queryStringCountResult, 30)
-        .then(function (data) {
-            console.log('answer', data);
-            return;
+    var totalArray = [];
+    var filteredSum = [];
+
+    for (let i = 1; i <= (queryStringCountResult - 30); i++) {
+        var arraySum = [];
+        // console.log('value of i', i);
+        sqlStringFunction(i, (i + 29), function (err, res) {
+console.log('response', res.length);
+            arraySum = res.map(data => data['Snow (inches)']);
+            filteredSum = arraySum.filter(data2 => data2 != 'T');
+
+            totalArray.push({
+                'Start Date': moment(res[0].Date).format("YYYY-MM-DD"),
+                'End Date': moment(res[29].Date).format("YYYY-MM-DD"),
+                Sum: filteredSum.reduce((total, num) => total + parseFloat(num), 0).toFixed(2)
+            });
+
+             console.log('totalArray1', totalArray.length);
+             if (totalArray.length == (queryStringCountResult-30)){
+                 console.log(totalArray);
+             }
+
         })
-        .then(() => connection.end());
 
-})
+    }
+    // resolve(totalArray.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)));
 
-const calcLoop = (countOfRecords, numOfDays) => {
-    return new Promise(function (resolve, reject) {
-        var totalArray = [];
-        var filteredSum = [];
-
-        for (let i = 1; i <= (countOfRecords - numOfDays); i++) {
-            var arraySum = [];
-            console.log('value of i', i);
-            sqlStringFunction(i, (i + numOfDays - 1), function (err, res) {
-
-                arraySum = res.map(data => data['Snow (inches)']);
-                filteredSum = arraySum.filter(data2 => data2 != 'T');
-
-                totalArray.push({
-                    'Start Date': moment(res[0].Date).format("YYYY-MM-DD"),
-                    'End Date': moment(res[29].Date).format("YYYY-MM-DD"),
-                    Sum: filteredSum.reduce((total, num) => total + parseFloat(num), 0).toFixed(2)
-                });
-                console.log('totalArray1',totalArray[i]);
-
-            })
-            
-        }
-        // resolve(totalArray.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)));
-        resolve(totalArray);
-    })
-};
+});
 
 function sqlStringFunction(startIdx, endIdx, cb) {
     //SELECT * from msp_snow_data.80_89_msp_data
